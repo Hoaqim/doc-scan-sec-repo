@@ -1,4 +1,5 @@
 import typer
+import os
 from rich.console import Console
 from docscansec.scanner import run_syft, run_grype
 from docscansec.github_utils import update_github_docs
@@ -6,6 +7,10 @@ from docscansec.autofix import suggest_base_image_update
 
 app = typer.Typer(help="DocScanSec: Lightweight container scanning and doc automation.")
 console = Console()
+
+@app.callback()
+def main_callback():
+    pass
 
 @app.command()
 def scan(
