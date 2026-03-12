@@ -18,7 +18,7 @@ def scan(
     low_resource: bool = typer.Option(False, "--low-resource", help="Scan only the squashed image layer"),
     update_docs: bool = typer.Option(False, "--docs-update", help="Update GitHub README with scan results"),
     autofix: bool = typer.Option(False, "--auto-fix", help="Suggest base image updates for OS vulnerabilities"),
-    severity: str = typer.Option("Critical", "--severity", help="Vulnerability severity level to report (e.g., Low, Medium, High, Critical)")
+    severity: str = typer.Option("Critical", "--severity", help="Vulnerability severity level to report (e.g., Low,Medium,High,Critical)")
 ):
     console.print(f"[bold blue] Starting scan for {image}...[/bold blue]")
 
@@ -27,10 +27,12 @@ def scan(
         console.print("[bold red] SBOM generation failed.[/bold red]")
         raise typer.Exit(code=1)
 
-    vulns = run_grype(sbom_path, low_resource)
-    
-    vuln_count = sum(1 for v in vulns.get("matches", []) if v["vulnerability"]["severity"].lower() == severity.lower())
-    console.print(f"[bold yellow]Found {vuln_count} {severity.capitalize()} vulnerabilities.[/bold yellow]")
+    vulns_dict = {}
+    for s_name in severity.split(","):
+        vulns = run_grype(sbom_path, low_resource)
+        vuln_count = sum(1 for v in vulns.get("matches", []) if v["vulnerability"]["severity"].lower() == s_name.lower())
+        vulns_dict[s_name] = vuln_count
+        console.print(f"[bold yellow]Found {vuln_count} {severity.capitalize()} vulnerabilities.[/bold yellow]")
 
     if autofix:
         console.print("[cyan] Analyzing for auto-fix suggestions...[/cyan]")
@@ -43,7 +45,7 @@ def scan(
             console.print("[bold red]Please set the GITHUB_REPOSITORY env var (e.g., 'user/repo').[/bold red]")
         else:
             console.print("[cyan] Pushing updates to documentation...[/cyan]")
-            summary = f"**Scanned Image:** `{image}`\n**{severity} Vulnerabilities:** {vuln_count}"
+            summary = f"**Scanned Image:** `{image}`\n** Vulnerabilities:** {vulns_dict}"
             update_github_docs(repo_name, "SECURITY_REPORT.md", summary)
 
 if __name__ == "__main__":

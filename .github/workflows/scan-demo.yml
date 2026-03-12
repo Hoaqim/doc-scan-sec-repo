@@ -2,7 +2,7 @@ name: DocScanSec Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "multi-severities" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -41,7 +41,7 @@ jobs:
             -e GITHUB_TOKEN \
             -e GITHUB_REPOSITORY \
             docscansec:latest \
-            scan my-vulnerable-app:latest --docs-update --auto-fix
+            scan my-vulnerable-app:latest --docs-update --auto-fix --severity Critical,High
 
       - name: Check generated summary
         run: echo "Scan complete! Check your repository for SECURITY_REPORT.md updates."
