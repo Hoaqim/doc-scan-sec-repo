@@ -1,0 +1,45 @@
+name: DocScanSec Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build a vulnerable test image (for demonstration)
+        run: |
+          cat <<EOF > Dockerfile.test
+          FROM node:14-alpine
+          RUN echo "I am a vulnerable app"
+          EOF
+          docker build -t my-vulnerable-app:latest -f Dockerfile.test .
+
+      - name: Build DocScanSec CLI Tool
+        #TODO: Docker Hub/GHCR.
+        run: docker build -t docscansec:latest .
+
+      - name: Run DocScanSec Scan & Auto-Update Docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -e GITHUB_TOKEN \
+            -e GITHUB_REPOSITORY \
+            docscansec:latest \
+            scan my-vulnerable-app:latest --docs-update --auto-fix
+
+      - name: Check generated summary
+        run: echo "Scan complete! Check your repository for SECURITY_REPORT.md updates."
