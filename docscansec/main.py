@@ -27,13 +27,17 @@ def scan(
         console.print("[bold red] SBOM generation failed.[/bold red]")
         raise typer.Exit(code=1)
 
-    vulns_dict = {}
     vulns = run_grype(sbom_path, low_resource)
+    vulns_dict = {}
+    vuln_details = {}
 
     for s_name in severity.split(","):
-        vuln_count = sum(1 for v in vulns.get("matches", []) if v["vulnerability"]["severity"].lower() == s_name.lower())
-        vulns_dict[s_name] = vuln_count
-        console.print(f"[bold yellow]Found {vuln_count} {s_name.capitalize()} vulnerabilities.[/bold yellow]")
+        matches = [v for v in vulns.get("matches", []) if v["vulnerability"]["severity"].lower() == s_name.lower()]
+        if matches:
+            vulns_dict[s_name] = len(matches)
+            cves = list(set([m["vulnerability"]["id"] for m in matches]))
+            vuln_details[s_name] = cves
+            console.print(f"[bold yellow]Found {len(matches)} {s_name} vulnerabilities.[/bold yellow]")
 
     if autofix:
         console.print("[cyan] Analyzing for auto-fix suggestions...[/cyan]")
@@ -45,9 +49,21 @@ def scan(
         if not repo_name:
             console.print("[bold red]Please set the GITHUB_REPOSITORY env var (e.g., 'user/repo').[/bold red]")
         else:
-            console.print("[cyan] Pushing updates to documentation...[/cyan]")
-            summary = f"**Scanned Image:** `{image}`\n** Vulnerabilities:** {vulns_dict}"
-            update_github_docs(repo_name, "SECURITY_REPORT.md", summary)
+            md_lines = [f"**Scanned Image:** `{image}`\n", "### Vulnerability Summary\n"]
+            if not vulns_dict:
+                md_lines.append("No specified vulnerabilities found!\n")
+            else:
+                for sev, count in vulns_dict.items():
+                    md_lines.append(f"- **{sev}**: {count}")
+                md_lines.append("\n### Vulnerability Details\n")
+                for sev, cves in vuln_details.items():
+                    display_cves = ", ".join(cves[:20])
+                    if len(cves) > 20:
+                        display_cves += f" ... *(and {len(cves) - 20} more)*"
+                    md_lines.append(f"**{sev}**:\n`{display_cves}`\n")
+
+                summary = f"**Scanned Image:** `{image}`\n** Vulnerabilities:** {vulns_dict}"
+                update_github_docs(repo_name, "SECURITY_REPORT.md", summary)
 
 if __name__ == "__main__":
     app()
