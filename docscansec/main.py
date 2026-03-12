@@ -1,5 +1,5 @@
 import typer
-import os
+import os   
 from rich.console import Console
 from docscansec.scanner import run_syft, run_grype
 from docscansec.github_utils import update_github_docs
@@ -17,7 +17,8 @@ def scan(
     image: str = typer.Argument(..., help="Docker image to scan (e.g., alpine:latest)"),
     low_resource: bool = typer.Option(False, "--low-resource", help="Scan only the squashed image layer"),
     update_docs: bool = typer.Option(False, "--docs-update", help="Update GitHub README with scan results"),
-    autofix: bool = typer.Option(False, "--auto-fix", help="Suggest base image updates for OS vulnerabilities")
+    autofix: bool = typer.Option(False, "--auto-fix", help="Suggest base image updates for OS vulnerabilities"),
+    severity: str = typer.Option("Critical", "--severity", help="Vulnerability severity level to report (e.g., Low, Medium, High, Critical)")
 ):
     console.print(f"[bold blue] Starting scan for {image}...[/bold blue]")
 
@@ -28,9 +29,8 @@ def scan(
 
     vulns = run_grype(sbom_path, low_resource)
     
-    #TODO: option to choose vuln lvl
-    critical_count = sum(1 for v in vulns.get("matches", []) if v["vulnerability"]["severity"] == "Critical")
-    console.print(f"[bold yellow]Found {critical_count} Critical vulnerabilities.[/bold yellow]")
+    vuln_count = sum(1 for v in vulns.get("matches", []) if v["vulnerability"]["severity"].lower() == severity.lower())
+    console.print(f"[bold yellow]Found {vuln_count} {severity.capitalize()} vulnerabilities.[/bold yellow]")
 
     if autofix:
         console.print("[cyan] Analyzing for auto-fix suggestions...[/cyan]")
@@ -43,7 +43,7 @@ def scan(
             console.print("[bold red]Please set the GITHUB_REPOSITORY env var (e.g., 'user/repo').[/bold red]")
         else:
             console.print("[cyan] Pushing updates to documentation...[/cyan]")
-            summary = f"**Scanned Image:** `{image}`\n**Critical Vulnerabilities:** {critical_count}"
+            summary = f"**Scanned Image:** `{image}`\n**{severity} Vulnerabilities:** {vuln_count}"
             update_github_docs(repo_name, "SECURITY_REPORT.md", summary)
 
 if __name__ == "__main__":
