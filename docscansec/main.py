@@ -1,6 +1,8 @@
 import typer
 from rich.console import Console
 from docscansec.scanner import run_syft, run_grype
+from docscansec.github_utils import update_github_docs
+from docscansec.autofix import suggest_base_image_update
 
 app = typer.Typer(help="DocScanSec: Lightweight container scanning and doc automation.")
 console = Console()
@@ -27,12 +29,17 @@ def scan(
 
     if autofix:
         console.print("[cyan] Analyzing for auto-fix suggestions...[/cyan]")
-        # TODO: Call autofix.py logic here
-        console.print("Suggestion: Update base image from ubuntu:22.04 to ubuntu:24.04")
+        suggestion = suggest_base_image_update("Dockerfile")
+        console.print(suggestion)
 
     if update_docs:
-        console.print("[cyan] Pushing updates to documentation...[/cyan]")
-        # TODO: Call github_utils.py logic here
+        repo_name = os.getenv("GITHUB_REPOSITORY")
+        if not repo_name:
+            console.print("[bold red]Please set the GITHUB_REPOSITORY env var (e.g., 'user/repo').[/bold red]")
+        else:
+            console.print("[cyan] Pushing updates to documentation...[/cyan]")
+            summary = f"**Scanned Image:** `{image}`\n**Critical Vulnerabilities:** {critical_count}"
+            update_github_docs(repo_name, "SECURITY_REPORT.md", summary)
 
 if __name__ == "__main__":
     app()
