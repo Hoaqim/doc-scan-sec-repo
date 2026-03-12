@@ -1,10 +1,16 @@
+FROM anchore/syft:latest AS syft
+FROM anchore/grype:latest AS grype
+
 FROM python:3.12-slim
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin && \
-    curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+COPY --from=syft /syft /usr/local/bin/syft
+COPY --from=grype /grype /usr/local/bin/grype
+
 WORKDIR /app
+
 COPY pyproject.toml .
 COPY docscansec/ ./docscansec/
+
 RUN pip install --no-cache-dir .
 ENTRYPOINT ["python", "-m", "docscansec.main"]
 CMD ["--help"]
