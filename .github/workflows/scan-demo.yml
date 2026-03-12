@@ -2,7 +2,7 @@ name: DocScanSec Pipeline
 
 on:
   push:
-    branches: [ "main", "multi-severities" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:

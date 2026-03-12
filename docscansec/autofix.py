@@ -30,8 +30,7 @@ def suggest_base_image_update(dockerfile_path: str = "Dockerfile") -> str:
         content = f.read()
 
     # Extract the image names and tags 'FROM image:tag' also includes multi-stage builds
-    matches = list(re.finditer(r'^FROM\s+([a-zA-Z0-9_.-]+):([a-zA-Z0-9_.-]+)', content, re.MULTILINE))
-    
+    matches = list(re.finditer(r'^FROM\s+([a-zA-Z0-9_.-]+)(?::([a-zA-Z0-9_.-]+))?', content, re.MULTILINE))    
     if not matches:
         return "Could not detect a standard 'FROM image:tag' instruction in the Dockerfile."
 
@@ -39,7 +38,7 @@ def suggest_base_image_update(dockerfile_path: str = "Dockerfile") -> str:
     
     for match in matches:
         image_name = match.group(1)
-        current_tag = match.group(2)
+        current_tag = match.group(2) or "latest"
 
         latest_tag = get_latest_tag_from_dockerhub(image_name)
 

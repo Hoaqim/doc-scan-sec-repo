@@ -28,11 +28,12 @@ def scan(
         raise typer.Exit(code=1)
 
     vulns_dict = {}
+    vulns = run_grype(sbom_path, low_resource)
+
     for s_name in severity.split(","):
-        vulns = run_grype(sbom_path, low_resource)
         vuln_count = sum(1 for v in vulns.get("matches", []) if v["vulnerability"]["severity"].lower() == s_name.lower())
         vulns_dict[s_name] = vuln_count
-        console.print(f"[bold yellow]Found {vuln_count} {severity.capitalize()} vulnerabilities.[/bold yellow]")
+        console.print(f"[bold yellow]Found {vuln_count} {s_name.capitalize()} vulnerabilities.[/bold yellow]")
 
     if autofix:
         console.print("[cyan] Analyzing for auto-fix suggestions...[/cyan]")
