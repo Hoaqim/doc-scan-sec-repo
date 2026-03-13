@@ -62,7 +62,7 @@ def scan(
                         display_cves += f" ... *(and {len(cves) - 20} more)*"
                     md_lines.append(f"**{sev}**:\n`{display_cves}`\n")
 
-                summary = f"**Scanned Image:** `{image}`\n** Vulnerabilities:** {vulns_dict}"
+                summary = "\n".join(md_lines)
                 update_github_docs(repo_name, "SECURITY_REPORT.md", summary)
 
 if __name__ == "__main__":
