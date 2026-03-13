@@ -25,10 +25,6 @@ jobs:
           EOF
           docker build -t my-vulnerable-app:latest -f Dockerfile.test .
 
-      - name: Build DocScanSec CLI Tool
-        #TODO: Docker Hub/GHCR.
-        run: docker build -t docscansec:latest .
-
       - name: Run DocScanSec Scan & Auto-Update Docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,7 +36,7 @@ jobs:
             -w /workspace \
             -e GITHUB_TOKEN \
             -e GITHUB_REPOSITORY \
-            docscansec:latest \
+            ghcr.io/hoaqim/docscansec:main \
             scan my-vulnerable-app:latest --docs-update --auto-fix --severity Critical,High
 
       - name: Check generated summary
