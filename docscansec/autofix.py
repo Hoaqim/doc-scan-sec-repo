@@ -3,7 +3,9 @@ import os
 import requests
 
 def get_latest_tag_from_dockerhub(image_name: str) -> str | None:
-    url = f"https://hub.docker.com/v2/repositories/library/{image_name}/tags/?page_size=20&ordering=last_updated"
+    repo_path = image_name if "/" in image_name else f"library/{image_name}"
+    
+    url = f"https://hub.docker.com/v2/repositories/{repo_path}/tags/?page_size=20&ordering=last_updated"
     
     try:
         response = requests.get(url, timeout=5)
