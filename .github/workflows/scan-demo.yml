@@ -17,6 +17,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Build local DocScanSec image
+        run: docker build -t docscansec:local .
+
       - name: Build a vulnerable test image (for demonstration)
         run: |
           cat <<EOF > Dockerfile.test
@@ -30,13 +33,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
+          # ZMIANA: Używamy 'docscansec:local' zamiast 'ghcr.io/hoaqim/docscansec:main'
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             -e GITHUB_TOKEN \
             -e GITHUB_REPOSITORY \
-            ghcr.io/hoaqim/docscansec:main \
+            docscansec:local \
             scan my-vulnerable-app:latest --docs-update --auto-fix --severity Critical,High
 
       - name: Check generated summary
