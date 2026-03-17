@@ -35,7 +35,7 @@ jobs:
             -e GITHUB_REPOSITORY=${{ github.repository }} \
             ghcr.io/hoaqim/docscansec:main \
             scan my-app:latest --docs-update --auto-fix --severity Critical,High
-
+```
 ### Running Locally
 # Export your GitHub token if you want to use the auto-doc feature
 export GITHUB_TOKEN="your_path_here"
